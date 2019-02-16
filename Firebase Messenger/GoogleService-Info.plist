@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AD_UNIT_ID_FOR_BANNER_TEST</key>
+	<string>ca-app-pub-3940256099942544/2934735716</string>
+	<key>AD_UNIT_ID_FOR_INTERSTITIAL_TEST</key>
+	<string>ca-app-pub-3940256099942544/4411468910</string>
+	<key>CLIENT_ID</key>
+	<string>102574043401-os6c5of0ll6bpk2pppmkia56e2u893oq.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.102574043401-os6c5of0ll6bpk2pppmkia56e2u893oq</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDn0Ag611eWRlrAku3jlwD6xctOz-uozOw</string>
+	<key>GCM_SENDER_ID</key>
+	<string>102574043401</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.dake.Firebase-Messenger</string>
+	<key>PROJECT_ID</key>
+	<string>fir-mesenger-1f649</string>
+	<key>STORAGE_BUCKET</key>
+	<string>fir-mesenger-1f649.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<true></true>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<false></false>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:102574043401:ios:9544a6451df087d3</string>
+	<key>DATABASE_URL</key>
+	<string>https://fir-mesenger-1f649.firebaseio.com</string>
+</dict>
+</plist>
