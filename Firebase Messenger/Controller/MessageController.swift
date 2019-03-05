@@ -11,7 +11,13 @@ import Firebase
 
 class MessageController: UITableViewController {
     
+    let cellId = "cellId"
+    
+    var timer: Timer?
+    
     var messages = [Message]()
+    
+    var messageDictionary = [String : Message]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,26 +27,60 @@ class MessageController: UITableViewController {
         let image = UIImage(named: "new_message_icon")
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(handleNewMessages))
         
+        tableView.register(MessageCell.self, forCellReuseIdentifier: cellId)
+        
         checkIfUserIsLoggedIn()
         
-        observeMessages()
+        observeUserMessages()
         
     }
     
-    func observeMessages(){
-        let ref = Database.database().reference().child("Messages")
+    func observeUserMessages(){
+        guard let uid = Auth.auth().currentUser?.uid else { fatalError() }
+        
+        let ref = Database.database().reference().child("user-messages").child(uid)
         ref.observe(.childAdded, with: { (snapshot) in
-            
-            if let dictionary = snapshot.value as? [String:Any]{
-                let message = Message(dictionary: dictionary)
-                self.messages.append(message)
-            }
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
+            let userId = snapshot.key
+            Database.database().reference().child("user-messages").child(uid).child(userId).observe(.childAdded, with: { (snapshot) in
+                
+                let messagesRef = Database.database().reference().child("messages").child(snapshot.key)
+                
+                messagesRef.observeSingleEvent(of: .value, with: { (snapshot) in
+                    
+                    if let dictionary = snapshot.value as? [String:Any]{
+                        let message = Message(dictionary: dictionary)
+                        
+                        if let chatPartnerId = message.chatPartnerId() {
+                            self.messageDictionary[chatPartnerId] = message
+                        }
+                    }
+                    
+                    self.attemptToReloadTable()
+                    
+                }, withCancel: nil)
+                
+            }, withCancel: nil)
             
         }, withCancel: nil)
+    }
+    
+    private func attemptToReloadTable(){
+        self.timer?.invalidate()
+        
+        self.timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.handleTableReload), userInfo: nil, repeats: false)
+    }
+    
+    @objc func handleTableReload(){
+        self.messages = Array(self.messageDictionary.values)
+        self.messages.sort(by: { (m1, m2) -> Bool in
+            
+            return m1.timestamp!.intValue > m2.timestamp!.intValue
+            
+        })
+        
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -48,13 +88,32 @@ class MessageController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "cellId")
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as! MessageCell
         
         let message = messages[indexPath.row]
-        cell.textLabel?.text = message.fromId
-        cell.detailTextLabel?.text = message.text
+        
+        cell.message = message
         
         return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 72
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let message = messages[indexPath.row]
+        
+        guard let chatPartnerId = message.chatPartnerId() else { fatalError() }
+        let ref = Database.database().reference().child("users").child(chatPartnerId)
+        ref.observeSingleEvent(of: .value, with: { (snapshot) in
+            if let dictionary = snapshot.value as? [String : Any] {
+                let user = User(dictionary: dictionary)
+                user.id = chatPartnerId
+                self.showChatLogControllerMessages(user: user)
+            }
+        }, withCancel: nil)
+        
     }
     
     @objc func handleNewMessages(){
@@ -85,6 +144,14 @@ class MessageController: UITableViewController {
     }
     
     func setupCustomNavbar(user: User){
+        // in order to load only current user`s messages
+        messages.removeAll()
+        messageDictionary.removeAll()
+        tableView.reloadData()
+        
+        observeUserMessages()
+        //----------------
+        
         let titleView = UIView()
 //        titleView.backgroundColor = UIColor.red
         titleView.frame = CGRect(x: 0, y: 0, width: 100, height: 40)
@@ -138,7 +205,7 @@ class MessageController: UITableViewController {
     }
     
     func showChatLogControllerMessages(user: User) {
-        let chatController = ChatController(collectionViewLayout: UICollectionViewLayout())
+        let chatController = ChatController(collectionViewLayout: UICollectionViewFlowLayout())
         chatController.user = user
         navigationController?.pushViewController(chatController, animated: true)
     }
